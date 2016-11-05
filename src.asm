@@ -5,9 +5,10 @@ STACK ENDS
 
 DATA SEGMENT PARA PUBLIC 'data'
     ;<<<<<<<<<<<<<<<<<<<<<<<<float_number_to_string
+	int_num_of_pre_zeros dd 0
     cw_buffer dw 0
     minus db 0
-
+	five dd 5.0
     ten dd 10.0
     ascii_m dd 49.0
     
@@ -21,11 +22,15 @@ DATA SEGMENT PARA PUBLIC 'data'
     ;>>>>>>>>>>>>>>>>>>>>>>>>>float_number_to_string
 
 	typeX0MSG db "Please, type x0 here :$"
+	typeXNMSG db "Please, type xn here :$"
+	typeSTEPMSG db "Please, type step here :$"
+	typeACCMSG db "Please, type accuracy here :$"
+
     err1MSG db 0ah,"Invalid argument$"
     buffer db 256 DUP(?),'$'
-    ten dd 10.0
+    ;ten dd 10.0
     
-	x dd 5.6
+	x dd 4.9
 	fact dd 1
 	minus_one dd -1.0
 	plus_one dd 1.0
@@ -33,13 +38,13 @@ DATA SEGMENT PARA PUBLIC 'data'
 	previous_stupid_rezult dd 0.0
 	stupid_rezult dd 0.0
 	factical_accuracy dd 0.0
-	required_accuracy dd 0.00001
+	required_accuracy dd 0.000001
 	num_of_members dd 0
 
 	brainy_rezult dd 0.0
 
-	x_end dd 6.6
-	x_step dd 0.1
+	x_end dd 9.6
+	x_step dd 0.3
 	num_of_steps dd 0
 
 	one dd 1.0
@@ -47,9 +52,13 @@ DATA SEGMENT PARA PUBLIC 'data'
     count dw 0
 
 	new_line db 0ah,"$"
-	atomic_rezult db "For the x = "
+	atomic_rezult db "For the x = ","$"
+	atomic_rezult1 db " e^(-x) with using function = ","$"
+	atomic_rezult2 db " and with using stupid method = ","$"
+	atomic_rezult3 db " and number of members = ","$"
+	atomic_rezult4 db 0ah,"$"
 	cur_iteration dd 0
-	atomic_rezult2 db " e^(-x) with using function = ... and with using stupid method = ... and number of members = ... ",0ah,"$"
+	;atomic_rezult2 db " e^(-x) with using function = ... and with using stupid method = ... and number of members = ... ",0ah,"$"
 DATA ENDS
 
 CODE SEGMENT PARA PUBLIC 'code'
@@ -61,7 +70,50 @@ CODE SEGMENT PARA PUBLIC 'code'
 	;
 	;getting data
 	;
-	;CALL read_to_st
+	mov ah,09h
+	mov dx, offset typeX0MSG
+	int 21h
+
+	CALL read_to_st
+	fstp x
+
+	mov ah,09h
+	mov dx, offset new_line
+	int 21h
+
+	mov ah,09h
+	mov dx, offset typeXNMSG
+	int 21h
+	
+	CALL read_to_st
+	fstp x_end
+
+	mov ah,09h
+	mov dx, offset new_line
+	int 21h
+
+	mov ah,09h
+	mov dx, offset typeSTEPMSG
+	int 21h
+
+	CALL read_to_st
+	fstp x_step
+
+	mov ah,09h
+	mov dx, offset new_line
+	int 21h
+
+	mov ah,09h
+	mov dx, offset typeACCMSG
+	int 21h
+
+	CALL read_to_st
+	fstp required_accuracy
+
+	mov ah,09h
+	mov dx, offset new_line
+	int 21h
+
 	;CALL read_to_st
 
 
@@ -71,6 +123,9 @@ CODE SEGMENT PARA PUBLIC 'code'
 
 	CALL load_stepnum_to_cx
 	lp_brainy:
+		
+    		
+
 		;init
 		mov cur_iteration,esi
 		fldz
@@ -101,12 +156,6 @@ CODE SEGMENT PARA PUBLIC 'code'
 			fld stupid_rezult
 		;end of stupid part
 		CALL move_to_next_x
-		
-		fld x
-    
-    		CALL float_number_to_string
-    
-    		CALL show_float_converted
 
 		CALL show_atomic_rezult
 		pop cx
@@ -235,11 +284,11 @@ CODE SEGMENT PARA PUBLIC 'code'
 	load_stepnum_to_cx endp
 
 	read_to_st proc
-		mov ah,0Ah              ;Функция DOS 0Ah - ввод строки в буфер
-        mov [buffer],254        ;Запись максимальной длины в первый байт буфера
-        mov byte[buffer+1],0    ;Обнуление второго байта (фактической длины)
-        mov dx,offset buffer    ;DX = aдрес буфера
-        int 21h                 ;Обращение к функции DOS
+		mov ah,0Ah              ;пїЅпїЅпїЅпїЅпїЅпїЅпїЅ DOS 0Ah - пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
+        mov [buffer],254        ;пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+        mov byte[buffer+1],0    ;пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ)
+        mov dx,offset buffer    ;DX = aпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+        int 21h                 ;пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ DOS
 		mov ah,09h
 		mov dx,offset new_line
 		int 21h
@@ -262,8 +311,8 @@ CODE SEGMENT PARA PUBLIC 'code'
         je  m2                  ;yes
 		and al,0fh              ;ASCII->BCD
 		mov u_n,ax
-		fiadd u_n               ;складываем очередную цифру и значение в стеке сопроцессора
-		fdiv st(0),st(1)        ;делим значение в вершине стека на 10
+		fiadd u_n               ;пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		fdiv st(0),st(1)        ;пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 10
 		dec cx                  ;decrement for length of string
 		inc count               
 		jmp m1
@@ -288,9 +337,44 @@ CODE SEGMENT PARA PUBLIC 'code'
 	show_atomic_rezult proc
 		push dx
 		push ax
+
 		mov ah,09h
 		mov dx, offset atomic_rezult
 		int 21h
+
+		fld x
+		fsub x_step
+    		CALL float_number_to_string
+    		CALL show_float_converted
+
+    		mov ah,09h
+		mov dx, offset atomic_rezult1
+		int 21h
+
+		fld brainy_rezult
+    		CALL float_number_to_string
+    		CALL show_float_converted
+
+    		mov ah,09h
+		mov dx, offset atomic_rezult2
+		int 21h
+
+		fld stupid_rezult
+    		CALL float_number_to_string
+    		CALL show_float_converted
+
+    		mov ah,09h
+		mov dx, offset atomic_rezult3
+		int 21h
+
+		fild num_of_members
+    		CALL float_number_to_string
+    		CALL show_float_converted
+
+    		mov ah,09h
+		mov dx, offset atomic_rezult4
+		int 21h
+
 		pop ax
 		pop dx
 		ret
@@ -348,6 +432,16 @@ CODE SEGMENT PARA PUBLIC 'code'
         inc si
         mov num_str[si],46
         inc si
+
+        fild int_buf
+        fldz
+        fcompp
+        fstsw ax
+        sahf
+        jnz convert_int
+            mov num_str[si],48
+            inc si
+            jmp int_converted
         convert_int:
             fild int_buf
             fldz
@@ -363,6 +457,25 @@ CODE SEGMENT PARA PUBLIC 'code'
             fsubp
             fld ten
             fmulp
+
+            fldz
+            fcomp
+            fstsw ax
+            sahf
+            jnz not_zero_got
+                fsub one 
+
+			
+            not_zero_got:
+
+			fld five
+            fcomp
+            fstsw ax
+            sahf
+            jnz not_five_got
+                fsub one 
+
+			not_five_got:
             fadd ascii_m
             fistp  int_tmp
             mov eax,int_tmp
@@ -389,10 +502,14 @@ CODE SEGMENT PARA PUBLIC 'code'
         push si
         push bx
         push dx
+        push cx
 
         xor si,si
         mov float_str[si],36
         inc si
+        mov ecx,int_num_of_pre_zeros
+        
+        
         convert_float:
             fild float_buf
             fldz
@@ -408,6 +525,24 @@ CODE SEGMENT PARA PUBLIC 'code'
             fsubp
             fld ten
             fmulp
+
+            fldz
+            fcomp
+            fstsw ax
+            sahf
+            jnz not_zero_got_float
+                fsub one 
+            
+            not_zero_got_float:
+
+			fld five
+            fcomp
+            fstsw ax
+            sahf
+            jnz not_five_got_float
+                fsub one 
+
+			not_five_got_float:
             fadd ascii_m
             frndint
             fistp  int_tmp
@@ -416,12 +551,23 @@ CODE SEGMENT PARA PUBLIC 'code'
             inc si
         jmp convert_float
         float_converted:
+
+        mov ecx,int_num_of_pre_zeros
+        cmp ecx,0
+        jle no_add_invisible_zeros
+        add_invisible_zeros:
+            mov float_str[si],48
+            inc si
+        loop add_invisible_zeros
+        no_add_invisible_zeros:
+
         mov cx,si
         mov bx,offset float_str
         CALL revert_str
 
-        pop dx
         pop cx
+        pop dx
+        pop bx
         pop si
         ret
     float_part_to_str endp
@@ -471,6 +617,8 @@ CODE SEGMENT PARA PUBLIC 'code'
     take_float_part endp
 
     float_number_to_string proc
+		mov int_num_of_pre_zeros,0
+		mov minus,0
         CALL ceil_mode
         CALL take_int_part
         CALL take_float_part

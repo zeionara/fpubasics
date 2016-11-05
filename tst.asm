@@ -6,7 +6,13 @@ mul10 macro reg
 endm
 
 DATA SEGMENT PARA PUBLIC 'data'
+    newline db 0ah,"$"
+    one dd 1.0
     ;<<<<<<<<<<<<<<<<<<<<<<<<float_number_to_string
+    int_num_of_pre_zeros dd 0
+    was_dd_in_float db 0
+
+    int_zero db 0
     cw_buffer dw 0
     minus db 0
 
@@ -21,8 +27,8 @@ DATA SEGMENT PARA PUBLIC 'data'
     num_str db 100 DUP (32),"$"
     float_str db 100 DUP (32),"$"
     ;>>>>>>>>>>>>>>>>>>>>>>>>>float_number_to_string
-    x dd -339.789
-    y dd 1923.763
+    x dd -2234.789
+    y dd 5.014
 DATA ENDS
 
 CODE SEGMENT PARA PUBLIC 'code'
@@ -34,6 +40,16 @@ CODE SEGMENT PARA PUBLIC 'code'
     finit
 
     fld y
+    
+    CALL float_number_to_string
+    
+    CALL show_float_converted
+
+    mov ah,09h
+    mov dx, offset newline
+    int 21h
+
+    fld x
     
     CALL float_number_to_string
     
@@ -89,12 +105,23 @@ CODE SEGMENT PARA PUBLIC 'code'
         push si
         push cx
         push dx
+        mov int_zero,0
 
         xor si,si
         mov num_str[si],36
         inc si
         mov num_str[si],46
         inc si
+
+        fild int_buf
+        fldz
+        fcompp
+        fstsw ax
+        sahf
+        jnz convert_int
+            mov num_str[si],48
+            inc si
+            jmp int_converted
         convert_int:
             fild int_buf
             fldz
@@ -110,6 +137,15 @@ CODE SEGMENT PARA PUBLIC 'code'
             fsubp
             fld ten
             fmulp
+
+            fldz
+            fcomp
+            fstsw ax
+            sahf
+            jnz not_zero_got
+                fsub one 
+            
+            not_zero_got:
             fadd ascii_m
             fistp  int_tmp
             mov eax,int_tmp
@@ -136,10 +172,14 @@ CODE SEGMENT PARA PUBLIC 'code'
         push si
         push bx
         push dx
+        push cx
 
         xor si,si
         mov float_str[si],36
         inc si
+        mov ecx,int_num_of_pre_zeros
+        
+        
         convert_float:
             fild float_buf
             fldz
@@ -155,6 +195,15 @@ CODE SEGMENT PARA PUBLIC 'code'
             fsubp
             fld ten
             fmulp
+
+            fldz
+            fcomp
+            fstsw ax
+            sahf
+            jnz not_zero_got_float
+                fsub one 
+            
+            not_zero_got_float:
             fadd ascii_m
             frndint
             fistp  int_tmp
@@ -163,12 +212,23 @@ CODE SEGMENT PARA PUBLIC 'code'
             inc si
         jmp convert_float
         float_converted:
+
+        mov ecx,int_num_of_pre_zeros
+        cmp ecx,0
+        jle no_add_invisible_zeros
+        add_invisible_zeros:
+            mov float_str[si],48
+            inc si
+        loop add_invisible_zeros
+        no_add_invisible_zeros:
+
         mov cx,si
         mov bx,offset float_str
         CALL revert_str
 
-        pop dx
         pop cx
+        pop dx
+        pop bx
         pop si
         ret
     float_part_to_str endp
@@ -195,12 +255,22 @@ CODE SEGMENT PARA PUBLIC 'code'
     take_float_part proc
         push ax
         push cx
+        push dx
+        xor dx,dx
 
         fsubp           ;take float part to float_buf
         mov cx,8
         cont_search:
             fld ten
             fmul
+
+            fld1
+            fcomp
+            fstsw ax
+            sahf
+            jc cont_float
+                inc dx
+            cont_float:
             fst st(1)
             frndint
             fcomp
@@ -212,12 +282,17 @@ CODE SEGMENT PARA PUBLIC 'code'
         frndint
         fist float_buf
 
+        mov int_num_of_pre_zeros,edx
+        pop dx
         pop cx
         pop ax
         ret
     take_float_part endp
 
     float_number_to_string proc
+        mov int_num_of_pre_zeros,0
+        mov was_dd_in_float,0
+        mov minus,0
         CALL ceil_mode
         CALL take_int_part
         CALL take_float_part
